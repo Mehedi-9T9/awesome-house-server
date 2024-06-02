@@ -30,6 +30,7 @@ async function run() {
         await client.connect();
         const apertmentsCollection = client.db("apertmentsColletion").collection("apertments")
         const userRoomCollection = client.db("apertmentsColletion").collection("userRoom")
+        const usersCollection = client.db("apertmentsColletion").collection("users")
 
         //apertments related api
         app.get("/apertments", async (req, res) => {
@@ -46,12 +47,26 @@ async function run() {
             res.send({ totalApertment })
         })
 
-        // user related api
+        // user related api, user selectes items
         app.post("/userroom", async (req, res) => {
             const userRoom = req.body
             const result = await userRoomCollection.insertOne(userRoom)
             res.send(result)
 
+        })
+        //user of save data in database
+        app.post('/user', async (req, res) => {
+            const userinfo = req.body
+            const result = await usersCollection.insertOne(userinfo)
+            res.send(result)
+        })
+
+        //member data load
+        app.get("/myRoom", async (req, res) => {
+            const email = req.query.email
+            const filter = { userEmail: email }
+            const result = await userRoomCollection.find(filter).toArray()
+            res.send(result)
         })
 
 
