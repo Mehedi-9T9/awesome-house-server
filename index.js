@@ -29,6 +29,7 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
         const apertmentsCollection = client.db("apertmentsColletion").collection("apertments")
+        const userRoomCollection = client.db("apertmentsColletion").collection("userRoom")
 
         //apertments related api
         app.get("/apertments", async (req, res) => {
@@ -43,6 +44,14 @@ async function run() {
         app.get("/totalApertment", async (req, res) => {
             const totalApertment = await apertmentsCollection.estimatedDocumentCount()
             res.send({ totalApertment })
+        })
+
+        // user related api
+        app.post("/userroom", async (req, res) => {
+            const userRoom = req.body
+            const result = await userRoomCollection.insertOne(userRoom)
+            res.send(result)
+
         })
 
 
