@@ -32,8 +32,17 @@ async function run() {
 
         //apertments related api
         app.get("/apertments", async (req, res) => {
-            const result = await apertmentsCollection.find().toArray()
+
+
+            const page = parseInt(req.query.page);
+            const size = parseInt(req.query.size);
+
+            const result = await apertmentsCollection.find().skip(page * size).limit(size).toArray()
             res.send(result)
+        })
+        app.get("/totalApertment", async (req, res) => {
+            const totalApertment = await apertmentsCollection.estimatedDocumentCount()
+            res.send({ totalApertment })
         })
 
 
