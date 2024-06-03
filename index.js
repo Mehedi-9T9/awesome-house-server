@@ -31,6 +31,7 @@ async function run() {
         const apertmentsCollection = client.db("apertmentsColletion").collection("apertments")
         const userRoomCollection = client.db("apertmentsColletion").collection("userRoom")
         const usersCollection = client.db("apertmentsColletion").collection("users")
+        const annaousementCollection = client.db("apertmentsColletion").collection("annaousement")
 
         //apertments related api
         app.get("/apertments", async (req, res) => {
@@ -79,6 +80,13 @@ async function run() {
         app.get("/pendingdata", async (req, res) => {
             const filter = { status: 'pending' }
             const result = await userRoomCollection.find(filter).toArray()
+            res.send(result)
+        })
+
+        //annaousment related
+        app.post("/annaousement", async (req, res) => {
+            const annaousement = req.body
+            const result = await annaousementCollection.insertOne(annaousement)
             res.send(result)
         })
 
