@@ -69,6 +69,19 @@ async function run() {
             res.send(result)
         })
 
+        // admin related
+        app.get("/users", async (req, res) => {
+            const result = await usersCollection.find().toArray()
+            res.send(result)
+        })
+
+        //ruquest data related api
+        app.get("/pendingdata", async (req, res) => {
+            const filter = { status: 'pending' }
+            const result = await userRoomCollection.find(filter).toArray()
+            res.send(result)
+        })
+
 
 
 
