@@ -109,6 +109,11 @@ async function run() {
             const result = await annaousementCollection.insertOne(annaousement)
             res.send(result)
         })
+        //Annaousment data load
+        app.get("/annaousmentData", async (req, res) => {
+            const result = await annaousementCollection.find().toArray()
+            res.send(result)
+        })
 
         //update status and user to member
         app.patch("/booking", async (req, res) => {
