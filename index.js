@@ -12,7 +12,7 @@ app.get("/", (req, res) => {
 })
 //mongodb code start
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.cd4uzfy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -88,6 +88,33 @@ async function run() {
             const annaousement = req.body
             const result = await annaousementCollection.insertOne(annaousement)
             res.send(result)
+        })
+
+        //update status and user to member
+        app.patch("/booking", async (req, res) => {
+            const userId = req.query.userId
+            const email = req.query.email
+            const currentDate = new Date().toLocaleDateString();
+            const filterId = { _id: new ObjectId(userId) }
+            const updateDoc = {
+                $set: {
+                    status: "booked",
+                    acceptDate: currentDate,
+                },
+            };
+            const statusResult = await userRoomCollection.updateOne(filterId, updateDoc)
+            //user update
+            const filterEmail = { userEmail: email }
+
+            const userDoc = {
+                $set: {
+                    role: "member",
+
+                }
+            }
+            const userResult = await usersCollection.updateOne(filterEmail, userDoc)
+            res.send([statusResult, userResult])
+
         })
 
 
