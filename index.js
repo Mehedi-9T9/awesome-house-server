@@ -72,8 +72,28 @@ async function run() {
 
         // admin related
         app.get("/users", async (req, res) => {
-            const result = await usersCollection.find().toArray()
+            const filter = { role: "member" }
+            const result = await usersCollection.find(filter).toArray()
             res.send(result)
+        })
+        //demotion user
+        app.patch("/demotionUser", async (req, res) => {
+            const email = req.query.email
+            const filter = { userEmail: email }
+            const updateDoc = {
+                $set: {
+                    role: "user"
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updateDoc)
+            const updateStatus = {
+                $set: {
+                    status: "pending"
+                }
+            }
+            const statusResult = await userRoomCollection.updateMany(filter, updateStatus)
+            res.send([result, statusResult])
+
         })
 
         //ruquest data related api
