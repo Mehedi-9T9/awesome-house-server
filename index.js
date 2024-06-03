@@ -116,6 +116,13 @@ async function run() {
             res.send([statusResult, userResult])
 
         })
+        //delete apertment
+        app.delete("/deleteApertment", async (req, res) => {
+            const id = req.query.id
+            const filter = { _id: new ObjectId(id) }
+            const result = await userRoomCollection.deleteOne(filter)
+            res.send(result)
+        })
 
 
 
