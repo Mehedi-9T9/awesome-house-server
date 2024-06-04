@@ -3,6 +3,7 @@ const cors = require('cors');
 const port = process.env.PORT || 5000;
 const app = express()
 require('dotenv').config()
+const stripe = require("stripe")(process.env.PAYMENT_KEY);
 
 app.use(cors())
 app.use(express.json())
@@ -51,8 +52,19 @@ async function run() {
         // user related api, user selectes items
         app.post("/userroom", async (req, res) => {
             const userRoom = req.body
-            const result = await userRoomCollection.insertOne(userRoom)
-            res.send(result)
+            const email = req.query.email
+            const filter = { userEmail: email }
+            const search = await userRoomCollection.findOne(filter)
+
+            if (!search) {
+                const result = await userRoomCollection.insertOne(userRoom)
+                res.send(result)
+
+
+            } else {
+                res.send('You already Book')
+            }
+
 
         })
         //user of save data in database
@@ -65,7 +77,7 @@ async function run() {
         //member data load
         app.get("/myRoom", async (req, res) => {
             const email = req.query.email
-            const filter = { userEmail: email }
+            const filter = { userEmail: email, status: "booked" }
             const result = await userRoomCollection.find(filter).toArray()
             res.send(result)
         })
@@ -150,7 +162,25 @@ async function run() {
         })
 
 
+        //Payment related api
+        app.post("/create-payment-intent", async (req, res) => {
+            const { rent } = req.body
+            const amount = parseInt(rent * 100)
+            const paymentIntent = await stripe.paymentIntents.create({
+                // amount: calculateOrderAmount(items),
+                amount: amount,
+                currency: "usd",
+                payment_method_types: ['card']
 
+                // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
+                // automatic_payment_methods: {
+                //   enabled: true,
+                // },
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
+        })
 
 
 
