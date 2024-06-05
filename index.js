@@ -35,10 +35,21 @@ async function run() {
         const annaousementCollection = client.db("apertmentsColletion").collection("annaousement")
         const paymentCollection = client.db("apertmentsColletion").collection("paymentInfo")
 
+        //user role related
+        app.get("/userRole", async (req, res) => {
+            const email = req.query.email
+            const filter = { userEmail: email }
+            const options = {
+                projection: { _id: 0, role: 1 },
+            };
+            const result = await usersCollection.findOne(filter, options)
+            res.send(result)
+
+        })
+
+
         //apertments related api
         app.get("/apertments", async (req, res) => {
-
-
             const page = parseInt(req.query.page);
             const size = parseInt(req.query.size);
 
