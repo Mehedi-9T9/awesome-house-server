@@ -198,6 +198,17 @@ async function run() {
             res.send(result)
         })
 
+        app.get("/paymentmonth", async (req, res) => {
+            const email = req.query.email
+            const month = req.query.month
+
+            const query = { userEmail: email, month: month }
+            console.log(query);
+            const result = await paymentCollection.find(query).toArray()
+            console.log(result);
+            res.send(result)
+        })
+
 
 
         // Send a ping to confirm a successful connection
