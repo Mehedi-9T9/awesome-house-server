@@ -33,6 +33,7 @@ async function run() {
         const userRoomCollection = client.db("apertmentsColletion").collection("userRoom")
         const usersCollection = client.db("apertmentsColletion").collection("users")
         const annaousementCollection = client.db("apertmentsColletion").collection("annaousement")
+        const paymentCollection = client.db("apertmentsColletion").collection("paymentInfo")
 
         //apertments related api
         app.get("/apertments", async (req, res) => {
@@ -180,6 +181,21 @@ async function run() {
             res.send({
                 clientSecret: paymentIntent.client_secret
             })
+        })
+
+        //payment data save in database
+        app.post("/paymentInfo", async (req, res) => {
+            const paymentInfo = req.body
+            const result = await paymentCollection.insertOne(paymentInfo)
+            res.send(result)
+        })
+        //send payment data
+        app.get("/paymentData", async (req, res) => {
+            const email = req.query.email
+
+            const filter = { userEmail: email }
+            const result = await paymentCollection.find(filter).toArray()
+            res.send(result)
         })
 
 
