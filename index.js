@@ -34,6 +34,7 @@ async function run() {
         const usersCollection = client.db("apertmentsColletion").collection("users")
         const annaousementCollection = client.db("apertmentsColletion").collection("annaousement")
         const paymentCollection = client.db("apertmentsColletion").collection("paymentInfo")
+        const couponsCollection = client.db("apertmentsColletion").collection("coupons")
 
         //user role related
         app.get("/userRole", async (req, res) => {
@@ -45,6 +46,27 @@ async function run() {
             const result = await usersCollection.findOne(filter, options)
             res.send(result)
 
+
+        })
+        //coupons related
+        app.get("/coupons", async (req, res) => {
+            const result = await couponsCollection.findOne()
+            res.send(result)
+
+        })
+        // update coupons
+        app.patch("/updateCoupon", async (req, res) => {
+            const couponInfo = req.body
+            const couponId = req.query.couponId
+            const filter = { _id: new ObjectId(couponId) }
+            const updateDoc = {
+                $set: {
+                    offer: couponInfo.inputOffer,
+                    coupon: couponInfo.inputCoupon,
+                }
+            }
+            const result = await couponsCollection.updateMany(filter, updateDoc)
+            res.send(result)
         })
 
 
