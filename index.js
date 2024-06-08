@@ -132,12 +132,8 @@ async function run() {
                 }
             }
             const result = await usersCollection.updateOne(filter, updateDoc)
-            const updateStatus = {
-                $set: {
-                    status: "pending"
-                }
-            }
-            const statusResult = await userRoomCollection.updateMany(filter, updateStatus)
+
+            const statusResult = await userRoomCollection.deleteOne(filter)
             res.send([result, statusResult])
 
         })
@@ -165,6 +161,7 @@ async function run() {
         app.patch("/booking", async (req, res) => {
             const userId = req.query.userId
             const email = req.query.email
+            const oldId = req.query.oldId
             const currentDate = new Date().toLocaleDateString();
             const filterId = { _id: new ObjectId(userId) }
             const updateDoc = {
@@ -184,7 +181,15 @@ async function run() {
                 }
             }
             const userResult = await usersCollection.updateOne(filterEmail, userDoc)
-            res.send([statusResult, userResult])
+            const mainFilter = { _id: new ObjectId(oldId) }
+            const mainDoc = {
+                $set: {
+                    status: `booked on ${currentDate}`,
+
+                },
+            };
+            const mainResult = await apertmentsCollection.updateOne(mainFilter, mainDoc)
+            res.send([statusResult, userResult, mainResult])
 
         })
         //delete apertment
@@ -242,7 +247,24 @@ async function run() {
             res.send(result)
         })
 
-
+        // admin dasboard
+        app.get("/adminInfo", async (req, res) => {
+            const totalRoom = await apertmentsCollection.estimatedDocumentCount()
+            const totalAvailableRoom = await userRoomCollection.estimatedDocumentCount()
+            const availableRoom = ((totalRoom - totalAvailableRoom) / totalRoom) * 100
+            const bookedRoom = (totalAvailableRoom / totalRoom) * 100
+            // users
+            const userFilter = { role: "user" }
+            const findUsers = await usersCollection.find(userFilter).toArray()
+            const totalUsers = findUsers.length
+            //member
+            const memberFilter = { role: "member" }
+            const findMember = await usersCollection.find(memberFilter).toArray()
+            const totalMember = findMember.length
+            const adminInfo = { totalRoom, availableRoom, bookedRoom, totalUsers, totalMember }
+            res.send(adminInfo)
+            // console.log(totalRoom);
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
