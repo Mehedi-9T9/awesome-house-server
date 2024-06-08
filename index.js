@@ -48,6 +48,19 @@ async function run() {
 
 
         })
+        //login google and save data in
+        app.post("/socialUser", async (req, res) => {
+            const socialUser = req.body
+            const email = req.query.email
+            const filter = { userEmail: email }
+            const emailInfo = await usersCollection.findOne(filter)
+            if (!emailInfo) {
+                const result = await usersCollection.insertOne(socialUser)
+                res.send(result)
+            } else {
+                res.send("already have database")
+            }
+        })
         //coupons related
         app.get("/coupons", async (req, res) => {
             const result = await couponsCollection.findOne()
