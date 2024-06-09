@@ -4,6 +4,7 @@ const port = process.env.PORT || 5000;
 const app = express()
 require('dotenv').config()
 const stripe = require("stripe")(process.env.PAYMENT_KEY);
+const jwt = require('jsonwebtoken');
 
 app.use(cors())
 app.use(express.json())
@@ -35,6 +36,41 @@ async function run() {
         const annaousementCollection = client.db("apertmentsColletion").collection("annaousement")
         const paymentCollection = client.db("apertmentsColletion").collection("paymentInfo")
         const couponsCollection = client.db("apertmentsColletion").collection("coupons")
+
+        //user verification with jwt
+        app.post("/jwt", async (req, res) => {
+            const userInfo = req.body
+            const token = jwt.sign(userInfo, process.env.JWT_TOKEN, { expiresIn: "1h" })
+            res.send({ token })
+        })
+        //midleware
+        const verifyToken = (req, res, next) => {
+            const getToken = req.headers.authorization
+            if (!getToken) {
+                return res.status(401).send({ message: "forbidden access" })
+            }
+            jwt.verify(getToken, process.env.JWT_TOKEN, (err, decoded) => {
+                // err
+                if (err) {
+                    return res.status(401).send({ message: "forbidden access" })
+                }
+                req.decoded = decoded
+                // decoded undefined
+            });
+            next()
+
+        }
+        const verifyAdmin = async (req, res, next) => {
+            // console.log(req.decoded);
+            const email = req.decoded.email
+            const filter = { userEmail: email }
+            const isAdmin = await usersCollection.findOne(filter)
+            // console.log(isAdmin);
+            if (!isAdmin) {
+                return res.status(401).send({ message: "forbidden access" })
+            }
+            next()
+        }
 
         //user role related
         app.get("/userRole", async (req, res) => {
@@ -130,13 +166,13 @@ async function run() {
         })
 
         // admin related
-        app.get("/users", async (req, res) => {
+        app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
             const filter = { role: "member" }
             const result = await usersCollection.find(filter).toArray()
             res.send(result)
         })
         //demotion user
-        app.patch("/demotionUser", async (req, res) => {
+        app.patch("/demotionUser", verifyToken, verifyAdmin, async (req, res) => {
             const email = req.query.email
             const filter = { userEmail: email }
             const updateDoc = {
@@ -152,26 +188,28 @@ async function run() {
         })
 
         //ruquest data related api
-        app.get("/pendingdata", async (req, res) => {
+        app.get("/pendingdata", verifyToken, async (req, res) => {
             const filter = { status: 'pending' }
+            // const getToken = req.headers
+            // console.log(getToken);
             const result = await userRoomCollection.find(filter).toArray()
             res.send(result)
         })
 
         //annaousment related
-        app.post("/annaousement", async (req, res) => {
+        app.post("/annaousement", verifyToken, verifyAdmin, async (req, res) => {
             const annaousement = req.body
             const result = await annaousementCollection.insertOne(annaousement)
             res.send(result)
         })
         //Annaousment data load
-        app.get("/annaousmentData", async (req, res) => {
+        app.get("/annaousmentData", verifyToken, async (req, res) => {
             const result = await annaousementCollection.find().toArray()
             res.send(result)
         })
 
         //update status and user to member
-        app.patch("/booking", async (req, res) => {
+        app.patch("/booking", verifyToken, async (req, res) => {
             const userId = req.query.userId
             const email = req.query.email
             const oldId = req.query.oldId
@@ -206,7 +244,7 @@ async function run() {
 
         })
         //delete apertment
-        app.delete("/deleteApertment", async (req, res) => {
+        app.delete("/deleteApertment", verifyToken, verifyAdmin, async (req, res) => {
             const id = req.query.id
             const filter = { _id: new ObjectId(id) }
             const result = await userRoomCollection.deleteOne(filter)
@@ -241,7 +279,7 @@ async function run() {
             res.send(result)
         })
         //send payment data
-        app.get("/paymentData", async (req, res) => {
+        app.get("/paymentData", verifyToken, async (req, res) => {
             const email = req.query.email
 
             const filter = { userEmail: email }
@@ -249,7 +287,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get("/paymentmonth", async (req, res) => {
+        app.get("/paymentmonth", verifyToken, async (req, res) => {
             const email = req.query.email
             const month = req.query.month
 
@@ -261,7 +299,7 @@ async function run() {
         })
 
         // admin dasboard
-        app.get("/adminInfo", async (req, res) => {
+        app.get("/adminInfo", verifyToken, verifyAdmin, async (req, res) => {
             const totalRoom = await apertmentsCollection.estimatedDocumentCount()
             const totalAvailableRoom = await userRoomCollection.estimatedDocumentCount()
             const availableRoom = ((totalRoom - totalAvailableRoom) / totalRoom) * 100
